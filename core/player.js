@@ -59,6 +59,7 @@ export class Player extends GameObject {
         this.speed.x = goTowards(this.speed.x, targetSpeed, maxSpeedChange);
         //#endregion
 
+        //#region Jumping and gravity switching
         let desiredJump = false;
         if ("ArrowUp" in downKeys && elapsed - downKeys["ArrowUp"] <= this.maxBufferTime) {
             desiredJump = true;
@@ -80,19 +81,13 @@ export class Player extends GameObject {
             }
         }
 
-        if (desiredJump && this.grounded && downKeys["ArrowUp"] != this.lastConsumedJumpInput) {
-            this.lastConsumedJumpInput = downKeys["ArrowUp"];
-            // if (Math.sign(this.speed.y) == Math.sign(this.gravity)) {
-            //     this.speed.y = 0;
-            // }
-            this.speed.y = this.jumpSpeed;
-        }
-
         this.speed.y = goTowards(this.speed.y, -this.maxFallSpeed, this.gravity);
+        //#endregion
 
         this.position.x += this.speed.x;
         this.position.y += this.speed.y;
 
+        //#region Colision detection and resolving
         for (const block of solidBlocks) {
             const playerStart = this.position;
             const playerEnd = (new THREE.Vector2).addVectors(this.position, this.size);
@@ -152,6 +147,7 @@ export class Player extends GameObject {
                 }
             }
         }
+        //#endregion
 
         this.mesh.position.x = this.position.x;
         this.mesh.position.y = this.position.y;
