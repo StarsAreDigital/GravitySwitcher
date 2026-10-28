@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { goTowards, pointInBox } from './utils';
+import { goTowards, pointInBox } from './common';
 
 export class GameObject {
     constructor(mesh, position, size) {

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
-import { goTowards, pointInBox } from './utils';
+import { AABB, goTowards, pointInBox, Directions } from './common';
 import { GameObject } from './game-object';
+import { float } from 'three/tsl';
 
 export class Player extends GameObject {
 
@@ -35,9 +36,10 @@ export class Player extends GameObject {
         this.grounded = true;
         this.coyoteTimer = 0;
         this.gravityDirection = -1;
+        this.lastConsumedJumpInput = null;
     };
 
-    update({ deltatime, downKeys, elapsed }) {
+    update({ deltatime, downKeys, elapsed, solidBlocks }) {
 
         //#region Horizontal movement
         let targetSpeed = 0;
@@ -62,7 +64,11 @@ export class Player extends GameObject {
             desiredJump = true;
         }
 
-        if (desiredJump && this.grounded) {
+        if (desiredJump && this.grounded && downKeys["ArrowUp"] != this.lastConsumedJumpInput) {
+            this.lastConsumedJumpInput = downKeys["ArrowUp"];
+            // if (Math.sign(this.speed.y) == Math.sign(this.gravity)) {
+            //     this.speed.y = 0;
+            // }
             this.speed.y = this.jumpSpeed;
         }
 
@@ -71,9 +77,64 @@ export class Player extends GameObject {
         this.position.x += this.speed.x;
         this.position.y += this.speed.y;
 
-        if (this.position.y < 0) {
-            this.position.y = 0;
-            this.speed.y = 0;
+        for (const block of solidBlocks) {
+            const playerStart = this.position;
+            const playerEnd = (new THREE.Vector2).addVectors(this.position, this.size);
+
+            const blockStart = block.position;
+            const blockEnd = (new THREE.Vector2).addVectors(block.position, block.size);
+
+            const minkowskiStart = (new THREE.Vector2).subVectors(playerStart, blockEnd);
+            const minkowskiEnd = (new THREE.Vector2).subVectors(playerEnd, blockStart);
+
+            const penetration = new THREE.Vector2(0, 0);
+            let directionNudged = null;
+
+            if (minkowskiStart.x <= 0 && minkowskiStart.y <= 0 && minkowskiEnd.x >= 0 && minkowskiEnd.y >= 0) {
+                let min = Infinity;
+                if (Math.abs(minkowskiStart.x) < min) {
+                    min = Math.abs(minkowskiStart.x);
+                    penetration.x = -minkowskiStart.x;
+                    penetration.y = 0;
+                    directionNudged = Directions.RIGHT;
+                }
+                if (Math.abs(minkowskiEnd.x) < min) {
+                    min = Math.abs(minkowskiEnd.x);
+                    penetration.x = -minkowskiEnd.x;
+                    penetration.y = 0;
+                    directionNudged = Directions.LEFT;
+                }
+                if (Math.abs(minkowskiStart.y) < min) {
+                    min = Math.abs(minkowskiStart.y);
+                    penetration.x = 0;
+                    penetration.y = -minkowskiStart.y;
+                    directionNudged = Directions.UP;
+                }
+                if (Math.abs(minkowskiEnd.y) < min) {
+                    min = Math.abs(minkowskiEnd.y);
+                    penetration.x = 0;
+                    penetration.y = -minkowskiEnd.y;
+                    directionNudged = Directions.DOWN;
+                }
+            }
+
+            console.log(directionNudged);
+
+            this.position.add(penetration);
+            if (directionNudged) {
+                if (directionNudged == Directions.LEFT) {
+                    this.speed.x = Math.min(this.speed.x, 0);
+                }
+                if (directionNudged == Directions.RIGHT) {
+                    this.speed.x = Math.max(this.speed.x, 0);
+                }
+                if (directionNudged == Directions.DOWN) {
+                    this.speed.y = Math.min(this.speed.y, 0);
+                }
+                if (directionNudged == Directions.UP) {
+                    this.speed.y = Math.max(this.speed.y, 0);
+                }
+            }
         }
 
         this.mesh.position.x = this.position.x;

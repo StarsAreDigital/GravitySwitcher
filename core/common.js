@@ -1,6 +1,13 @@
 import * as THREE from 'three';
 import fs from 'fs';
 
+export const Directions = {
+    UP: 'up',
+    DOWN: 'down',
+    LEFT: 'left',
+    RIGHT: 'right',
+}
+
 export function AABB(a, b) {
     return !(
         a.position.x > b.position.x + b.size.x
