@@ -14,7 +14,7 @@ export class Player extends GameObject {
         maxSpeed = 0.3,
         jumpHeight = 5,
         jumpTime = 8,
-        maxFallSpeed = 1,
+        maxFallSpeed = 0.5,
         instantTurnaround = true,
         maxBufferTime = 0.2,
     ) {
@@ -35,8 +35,8 @@ export class Player extends GameObject {
         this.speed = new THREE.Vector2(0, 0);
         this.grounded = true;
         this.coyoteTimer = 0;
-        this.gravityDirection = -1;
         this.lastConsumedJumpInput = null;
+        this.canSwitchGravity = true;
     };
 
     update({ deltatime, downKeys, elapsed, solidBlocks }) {
@@ -62,6 +62,22 @@ export class Player extends GameObject {
         let desiredJump = false;
         if ("ArrowUp" in downKeys && elapsed - downKeys["ArrowUp"] <= this.maxBufferTime) {
             desiredJump = true;
+        }
+
+        if (this.grounded) this.canSwitchGravity = true;
+        if (desiredJump && this.lastConsumedJumpInput != downKeys["ArrowUp"]) {
+            this.lastConsumedJumpInput = downKeys["ArrowUp"];
+            if (this.grounded) {
+                if (Math.sign(this.speed.y) == Math.sign(this.gravity)) {
+                    this.speed.y = 0;
+                }
+                this.speed.y += this.jumpSpeed;
+            } else if (this.canSwitchGravity) {
+                this.canSwitchGravity = false;
+                this.gravity = -this.gravity;
+                this.maxFallSpeed = -this.maxFallSpeed;
+                this.jumpSpeed = -this.jumpSpeed;
+            }
         }
 
         if (desiredJump && this.grounded && downKeys["ArrowUp"] != this.lastConsumedJumpInput) {

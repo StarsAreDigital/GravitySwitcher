@@ -13,7 +13,7 @@ window.addEventListener('keydown', function (event) {
     if (event.key in downKeys) return;
     downKeys[event.key] = timer.getElapsed();
 
-    if (event.key == ' ') {
+    if (event.key == 'Escape') {
         running = !running;
     }
 });
@@ -35,7 +35,7 @@ function animate(time) {
     player.grounded = false;
     const colliderLeft = new THREE.Vector2(
         player.position.x * player.size.x,
-        player.position.y + 0.5 + player.gravityDirection * 0.5,
+        player.position.y + 0.5 + Math.sign(player.gravity) * 0.5,
     );
     const colliderLeftNudge = new THREE.Vector2(
         colliderLeft.x + 0.001,
@@ -43,7 +43,7 @@ function animate(time) {
     );
     const colliderRight = new THREE.Vector2(
         player.position.x + player.size.x,
-        player.position.y + 0.5 + player.gravityDirection * 0.5,
+        player.position.y + 0.5 + Math.sign(player.gravity) * 0.5,
     );
     const colliderRightNudge = new THREE.Vector2(
         colliderRight.x - 0.001,
