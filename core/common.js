@@ -39,6 +39,33 @@ export function goTowards(num, target, delta) {
     return num;
 }
 
+const CAMERA_LOOKAHEAD = false;
+const CAMERA_LOOKAHEAD_RATE = 2.0;
+const CAMERA_MAX_SPEED = 0.2;
+const CAMERA_MAX_DIST = 3.0;
+const CAMERA_DAMP_VERTICAL = true;
+export function cameraFollow(camera, entity) {
+    const target = new THREE.Vector2(entity.position.x, entity.position.y);
+
+    if (CAMERA_LOOKAHEAD && entity.speed) {
+        target.addScaledVector(entity.speed, CAMERA_LOOKAHEAD_RATE)
+    }
+
+    camera.position.x = goTowards(camera.position.x, target.x, CAMERA_MAX_SPEED);
+    if (!CAMERA_DAMP_VERTICAL) {
+        camera.position.y = goTowards(camera.position.y, target.y, CAMERA_MAX_SPEED);
+    }
+
+    const cameraPosition2d = new THREE.Vector2(camera.position.x, camera.position.y);
+
+    const distToTarget = cameraPosition2d.distanceTo(target);
+    if ((distToTarget) > CAMERA_MAX_DIST) {
+        cameraPosition2d.lerp(target, (distToTarget - CAMERA_MAX_DIST) / distToTarget);
+        camera.position.x = cameraPosition2d.x;
+        camera.position.y = cameraPosition2d.y;
+    }
+}
+
 export function loadScene(path) {
     fs.readFile('')
 }

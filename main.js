@@ -3,7 +3,7 @@ import { GUI } from 'lil-gui'
 import { Player } from './core/player';
 import { Obstacle } from './core/obstacle';
 import { Solid } from './core/solid';
-import { pointInBox } from './core/common';
+import { cameraFollow, pointInBox } from './core/common';
 
 let downKeys = {};
 let running = true;
@@ -64,6 +64,7 @@ function animate(time) {
     
     player.update({ deltatime, downKeys, elapsed, solidBlocks });
 
+    cameraFollow(camera, player);
 
     renderer.render(scene, camera);
 }
@@ -123,8 +124,13 @@ camera.position.y = 10;
 camera.position.z = 20;
 
 const gui = new GUI();
-gui.add(player.position, 'x').listen();
-gui.add(player.position, 'y').listen();
-gui.add(player.speed, 'x').listen();
-gui.add(player.speed, 'y').listen();
-gui.add(player, 'grounded').listen().disable();
+const playerFolder = gui.addFolder('Player');
+playerFolder.add(player.position, 'x').listen();
+playerFolder.add(player.position, 'y').listen();
+playerFolder.add(player.speed, 'x').listen();
+playerFolder.add(player.speed, 'y').listen();
+playerFolder.add(player, 'grounded').listen().disable();
+const cameraFolder = gui.addFolder('Camera');
+cameraFolder.add(camera.position, 'x').listen();
+cameraFolder.add(camera.position, 'y').listen();
+cameraFolder.add(camera.position, 'z').listen();

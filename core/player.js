@@ -129,8 +129,6 @@ export class Player extends GameObject {
                 }
             }
 
-            console.log(directionNudged);
-
             this.position.add(penetration);
             if (directionNudged) {
                 if (directionNudged == Directions.LEFT) {
