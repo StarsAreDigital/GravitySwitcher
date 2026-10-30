@@ -9,37 +9,73 @@ export class Player extends GameObject {
         mesh,
         position,
         size,
+
         horizontalAcceleration = 2,
         horizontalDeceleration = 2,
-        maxSpeed = 0.3,
-        jumpHeight = 5,
-        jumpTime = 8,
-        maxFallSpeed = 0.5,
         instantTurnaround = true,
+        maxSpeed = 0.3,
+
         maxBufferTime = 0.2,
+        jumpHeight = 5.0,
+        jumpTime = 8.0,
+        maxFallSpeed = -0.5,
+        coyoteTime = 0.1,
+
+        deathTime = 2.0,
+        spawnPoint = null,
+        spawnGravityDir = -1,
     ) {
         super(mesh, position, size);
 
         this.horizontalAcceleration = horizontalAcceleration;
         this.horizontalDeceleration = horizontalDeceleration;
         this.maxSpeed = maxSpeed;
-        this.maxFallSpeed = maxFallSpeed;
         this.instantTurnaround = instantTurnaround;
         this.maxBufferTime = maxBufferTime;
-
-        this.jumpHeight = jumpHeight;
+        
+        this.jumpHeight = Math.abs(jumpHeight);
         this.jumpTime = jumpTime;
-        this.gravity = -this.jumpHeight / (2 * Math.pow(this.jumpTime, 2));
-        this.jumpSpeed = Math.sqrt(2 * this.jumpHeight * Math.abs(this.gravity));
+        this.spawnGravity = spawnGravityDir;
+        this.gravity = spawnGravityDir * this.jumpHeight / (2 * Math.pow(this.jumpTime, 2));
+        this.jumpSpeed = -spawnGravityDir * Math.sqrt(2 * this.jumpHeight * Math.abs(this.gravity));
+        this.maxFallSpeed = maxFallSpeed;
+        this.coyoteTime = coyoteTime;
+
+        this.deathTime = deathTime;
+        this.spawnPoint = spawnPoint ?? new THREE.Vector2(position.x, position.y);
 
         this.speed = new THREE.Vector2(0, 0);
         this.grounded = true;
         this.coyoteTimer = 0;
         this.lastConsumedJumpInput = null;
         this.canSwitchGravity = true;
+        this.live = true;
     };
 
-    update({ deltatime, downKeys, elapsed, solidBlocks }) {
+    kill() {
+        this.deathTimer = this.deathTime;
+        this.live = false;
+    }
+
+    respawn() {
+        this.deathTimer = 0;
+        this.live = false;
+    }
+
+    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [] }) {
+        if (!this.live) {
+            this.deathTimer = goTowards(this.deathTimer, 0, deltatime);
+            if (this.deathTimer == 0) {
+                this.live = true;
+                this.position.x = this.spawnPoint.x;
+                this.position.y = this.spawnPoint.y;
+                this.speed.multiplyScalar(0);
+                this.gravity = this.spawnGravity * Math.abs(this.gravity);
+                this.jumpSpeed = -this.spawnGravity * Math.abs(this.jumpSpeed);
+                this.maxFallSpeed = this.spawnGravity * Math.abs(this.maxFallSpeed);
+            }
+            return;
+        }
 
         //#region Horizontal movement
         let targetSpeed = 0;
@@ -65,23 +101,31 @@ export class Player extends GameObject {
             desiredJump = true;
         }
 
-        if (this.grounded) this.canSwitchGravity = true;
+        if (this.grounded) {
+            this.canSwitchGravity = true;
+            this.coyoteTimer = this.coyoteTime;
+        } else {
+            this.coyoteTimer = goTowards(this.coyoteTimer, 0, deltatime);
+        }
         if (desiredJump && this.lastConsumedJumpInput != downKeys["ArrowUp"]) {
             this.lastConsumedJumpInput = downKeys["ArrowUp"];
-            if (this.grounded) {
+            if (this.grounded || this.coyoteTimer > 0) {
+                this.coyoteTimer = 0;
                 if (Math.sign(this.speed.y) == Math.sign(this.gravity)) {
                     this.speed.y = 0;
                 }
                 this.speed.y += this.jumpSpeed;
-            } else if (this.canSwitchGravity) {
-                this.canSwitchGravity = false;
-                this.gravity = -this.gravity;
-                this.maxFallSpeed = -this.maxFallSpeed;
-                this.jumpSpeed = -this.jumpSpeed;
+            } else {
+                if (this.canSwitchGravity) {
+                    this.canSwitchGravity = false;
+                    this.gravity = -this.gravity;
+                    this.maxFallSpeed = -this.maxFallSpeed;
+                    this.jumpSpeed = -this.jumpSpeed;
+                }
             }
         }
 
-        this.speed.y = goTowards(this.speed.y, -this.maxFallSpeed, this.gravity);
+        this.speed.y = goTowards(this.speed.y, this.maxFallSpeed, this.gravity);
         //#endregion
 
         this.position.x += this.speed.x;
@@ -144,6 +188,12 @@ export class Player extends GameObject {
                     this.speed.y = Math.max(this.speed.y, 0);
                 }
             }
+        }
+        //#endregion
+
+        //#region Hazards
+        for (const hazard of hazards) {
+
         }
         //#endregion
 

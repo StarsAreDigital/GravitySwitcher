@@ -17,6 +17,10 @@ window.addEventListener('keydown', function (event) {
     if (event.key == 'Escape') {
         running = !running;
     }
+
+    if (event.key == 'r' || event.key == 'R') {
+        player.respawn();
+    }
 });
 
 window.addEventListener('keyup', function (event) {
@@ -62,7 +66,7 @@ function animate(time) {
         rightNudgeCollides = rightNudgeCollides || pointInBox(colliderRightNudge, block);
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
-    
+
     player.update({ deltatime, downKeys, elapsed, solidBlocks });
 
     cameraFollow(camera, player);
@@ -88,7 +92,7 @@ const spikeMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(1, 0, 0),
 });
 const groundMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(0.5, 0.5, 0.5),
+    color: new THREE.Color(0.1, 0.1, 0.1),
 })
 
 const player = new Player(
@@ -122,12 +126,37 @@ camera.position.z = 20;
 
 const gui = new GUI();
 const playerFolder = gui.addFolder('Player');
-playerFolder.add(player.position, 'x').listen();
-playerFolder.add(player.position, 'y').listen();
-playerFolder.add(player.speed, 'x').listen();
-playerFolder.add(player.speed, 'y').listen();
-playerFolder.add(player, 'grounded').listen().disable();
+playerFolder.add(player.position, 'x')
+    .name('pos x')
+    .listen();
+    playerFolder.add(player.position, 'y')
+    .name('pos y')
+    .listen();
+    playerFolder.add(player.speed, 'x')
+    .name('speed x')
+    .listen();
+    playerFolder.add(player.speed, 'y')
+    .name('speed y')
+    .listen();
+playerFolder.add(player, 'grounded')
+    .listen().disable();
+playerFolder.add(player, 'gravity')
+    .listen().disable();
+playerFolder.add(player, 'maxFallSpeed')
+    .listen().disable();
+playerFolder.add(player, 'live')
+    .listen();
+playerFolder.add(player, 'kill');
+playerFolder.add(player.spawnPoint, 'x')
+    .listen()
+    .name('spawn x');
+playerFolder.add(player.spawnPoint, 'y')
+    .listen()
+    .name('spawn y');
 const cameraFolder = gui.addFolder('Camera');
-cameraFolder.add(camera.position, 'x').listen();
-cameraFolder.add(camera.position, 'y').listen();
-cameraFolder.add(camera.position, 'z').listen();
+cameraFolder.add(camera.position, 'x')
+    .listen();
+cameraFolder.add(camera.position, 'y')
+    .listen();
+cameraFolder.add(camera.position, 'z')
+    .listen();
