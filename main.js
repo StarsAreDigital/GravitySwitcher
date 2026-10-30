@@ -4,6 +4,7 @@ import { Player } from './core/player';
 import { Obstacle } from './core/obstacle';
 import { Solid } from './core/solid';
 import { cameraFollow, pointInBox } from './core/common';
+import level from './core/levels/level-1.json';
 
 let downKeys = {};
 let running = true;
@@ -105,17 +106,13 @@ spike.mesh.position.x = spike.position.x;
 spike.mesh.position.y = spike.position.y;
 const hazards = [spike];
 
-const ground = new Solid(
-    new THREE.Mesh(cubeGeometry, groundMaterial),
-    new THREE.Vector2(0, -1),
-    new THREE.Vector2(10000, 1)
+const solidBlocks = level.platforms.map(platform =>
+    new Solid(
+        new THREE.Mesh(cubeGeometry, groundMaterial),
+        new THREE.Vector2(platform.x, platform.y),
+        new THREE.Vector2(platform.width, platform.height),
+    )
 );
-const platform = new Solid(
-    new THREE.Mesh(cubeGeometry, groundMaterial),
-    new THREE.Vector2(3, 3),
-    new THREE.Vector2(10000, 1)
-);
-const solidBlocks = [ground, platform];
 
 const gameElements = [player, ...hazards, ...solidBlocks];
 scene.add(...gameElements.map(x => x.mesh));
