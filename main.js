@@ -4,7 +4,7 @@ import { Player } from './core/player';
 import { Obstacle } from './core/obstacle';
 import { Solid } from './core/solid';
 import { cameraFollow, pointInBox } from './core/common';
-import level from './core/levels/level-1.json';
+import level1 from './core/levels/level-1.json';
 
 let downKeys = {};
 let running = true;
@@ -16,10 +16,6 @@ window.addEventListener('keydown', function (event) {
 
     if (event.key == 'Escape') {
         running = !running;
-    }
-
-    if (event.key == 'r' || event.key == 'R') {
-        player.respawn();
     }
 });
 
@@ -66,8 +62,8 @@ function animate(time) {
         rightNudgeCollides = rightNudgeCollides || pointInBox(colliderRightNudge, block);
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
-
-    player.update({ deltatime, downKeys, elapsed, solidBlocks, hazards });
+    
+    player.update({ deltatime, downKeys, elapsed, solidBlocks, hazards: spikes });
 
     cameraFollow(camera, player);
 
@@ -92,7 +88,7 @@ const spikeMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(1, 0, 0),
 });
 const groundMaterial = new THREE.MeshBasicMaterial({
-    color: new THREE.Color(0.1, 0.1, 0.1),
+    color: new THREE.Color(0.5, 0.5, 0.5),
 })
 
 const player = new Player(
@@ -101,16 +97,26 @@ const player = new Player(
     new THREE.Vector2(1, 1),
 );
 
-const spike = new Obstacle(
-    new THREE.Mesh(spikeGeometry, spikeMaterial),
-    new THREE.Vector2(5, 0),
-    new THREE.Vector2(1, 1),
-);
-spike.mesh.position.x = spike.position.x;
-spike.mesh.position.y = spike.position.y;
-const hazards = [spike];
+const spikes = level1.spikes.map(spike => {
+    const obstacle = new Obstacle(
+        new THREE.Mesh(spikeGeometry, spikeMaterial),
+        new THREE.Vector2(spike.x, spike.y),
+        new THREE.Vector2(spike.width, spike.height),
+    );
+    const rotation = THREE.MathUtils.degToRad(spike.rotation ?? 0);
+    const centerOffset = new THREE.Vector2(spike.width / 2, spike.height / 2)
+        .rotateAround(new THREE.Vector2(), rotation);
 
-const solidBlocks = level.platforms.map(platform =>
+    obstacle.mesh.rotation.z = rotation;
+    obstacle.mesh.position.set(
+        spike.x + spike.width / 2 - centerOffset.x,
+        spike.y + spike.height / 2 - centerOffset.y,
+        obstacle.mesh.position.z,
+    );
+    return obstacle;
+});
+
+const solidBlocks = level1.platforms.map(platform =>
     new Solid(
         new THREE.Mesh(cubeGeometry, groundMaterial),
         new THREE.Vector2(platform.x, platform.y),
@@ -118,7 +124,7 @@ const solidBlocks = level.platforms.map(platform =>
     )
 );
 
-const gameElements = [player, ...hazards, ...solidBlocks];
+const gameElements = [player, ...spikes, ...solidBlocks];
 scene.add(...gameElements.map(x => x.mesh));
 
 camera.position.y = 10;
@@ -126,37 +132,12 @@ camera.position.z = 20;
 
 const gui = new GUI();
 const playerFolder = gui.addFolder('Player');
-playerFolder.add(player.position, 'x')
-    .name('pos x')
-    .listen();
-    playerFolder.add(player.position, 'y')
-    .name('pos y')
-    .listen();
-    playerFolder.add(player.speed, 'x')
-    .name('speed x')
-    .listen();
-    playerFolder.add(player.speed, 'y')
-    .name('speed y')
-    .listen();
-playerFolder.add(player, 'grounded')
-    .listen().disable();
-playerFolder.add(player, 'gravity')
-    .listen().disable();
-playerFolder.add(player, 'maxFallSpeed')
-    .listen().disable();
-playerFolder.add(player, 'live')
-    .listen();
-playerFolder.add(player, 'kill');
-playerFolder.add(player.spawnPoint, 'x')
-    .listen()
-    .name('spawn x');
-playerFolder.add(player.spawnPoint, 'y')
-    .listen()
-    .name('spawn y');
+playerFolder.add(player.position, 'x').listen();
+playerFolder.add(player.position, 'y').listen();
+playerFolder.add(player.speed, 'x').listen();
+playerFolder.add(player.speed, 'y').listen();
+playerFolder.add(player, 'grounded').listen().disable();
 const cameraFolder = gui.addFolder('Camera');
-cameraFolder.add(camera.position, 'x')
-    .listen();
-cameraFolder.add(camera.position, 'y')
-    .listen();
-cameraFolder.add(camera.position, 'z')
-    .listen();
+cameraFolder.add(camera.position, 'x').listen();
+cameraFolder.add(camera.position, 'y').listen();
+cameraFolder.add(camera.position, 'z').listen();
