@@ -64,7 +64,10 @@ function animate(time) {
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
     
-    player.update({ deltatime, downKeys, elapsed, solidBlocks, hazards: spikes });
+    for (const orb of orbs) {
+        orb.update(deltatime);
+    }
+    player.update({ deltatime, downKeys, elapsed, solidBlocks, hazards: spikes, orbs });
 
     cameraFollow(camera, player);
 
