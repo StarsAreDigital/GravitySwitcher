@@ -43,8 +43,9 @@
     { "x": 319, "y": 40, "width": 1, "height": 13 }
   ],
   "orbs": [
-    { "x": 10, "y": 10, "width": 1, "height": 1 }
-    
+    { "x": 235, "y": 11, "width": 1, "height": 1 },
+    { "x": 268, "y": 20, "width": 1, "height": 1 },
+    { "x": 290, "y": 47, "width": 1, "height": 1 }
   ],
 
   "spikes": [
