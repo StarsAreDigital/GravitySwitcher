@@ -90,7 +90,6 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
     75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
-renderer.setAnimationLoop(animate);
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -208,3 +207,5 @@ cameraFolder.add(camera.position, 'x').listen();
 cameraFolder.add(camera.position, 'y').listen();
 cameraFolder.add(camera.position, 'z').listen();
 gui.hide();
+
+renderer.setAnimationLoop(animate);
