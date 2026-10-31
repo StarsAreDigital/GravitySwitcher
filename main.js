@@ -6,8 +6,9 @@ import { Orb } from './core/orb';
 import { Solid } from './core/solid';
 import { cameraFollow, pointInBox } from './core/common';
 import level1 from './core/levels/level-1.json';
-import { MTLLoader, OBJLoader } from 'three/examples/jsm/Addons.js';
+import { MTLLoader, OBJLoader, TeapotGeometry } from 'three/examples/jsm/Addons.js';
 import { Checkpoint } from './core/checkpoint';
+import { Win } from './core/win';
 
 let downKeys = {};
 let running = true;
@@ -23,6 +24,10 @@ window.addEventListener('keydown', function (event) {
 
     if (event.key == 'r' || event.key == 'R') {
         player.respawn();
+    }
+
+    if (event.key == 'h' || event.key == 'H') {
+        gui.show(gui._hidden);
     }
 });
 
@@ -69,12 +74,12 @@ function animate(time) {
         rightNudgeCollides = rightNudgeCollides || pointInBox(colliderRightNudge, block);
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
-    
+
     for (const orb of orbs) {
         orb.update(deltatime);
     }
 
-    player.update({ deltatime, downKeys, elapsed, solidBlocks: solidBlocks, hazards: spikes, checkpoints: checkpoints, orbs: orbs });
+    player.update({ deltatime, downKeys, elapsed, solidBlocks: solidBlocks, hazards: spikes, checkpoints: checkpoints, orbs: orbs, win: win });
 
     cameraFollow(camera, player);
 
@@ -178,7 +183,14 @@ const orbs = level1.orbs.map(orb =>
     )
 );
 
-const gameElements = [player, ...spikes, ...solidBlocks, ...orbs, ...checkpoints];
+const winGeometry = new TeapotGeometry(1);
+const win = new Win(
+    new THREE.Mesh(winGeometry, flagMaterial),
+    new THREE.Vector2(level1.win.x, level1.win.y),
+    new THREE.Vector2(level1.win.width, level1.win.height),
+);
+
+const gameElements = [player, ...spikes, ...solidBlocks, ...orbs, ...checkpoints, win];
 scene.add(...gameElements.map(x => x.mesh));
 
 camera.position.y = 10;
@@ -195,3 +207,4 @@ const cameraFolder = gui.addFolder('Camera');
 cameraFolder.add(camera.position, 'x').listen();
 cameraFolder.add(camera.position, 'y').listen();
 cameraFolder.add(camera.position, 'z').listen();
+gui.hide();

@@ -61,7 +61,7 @@ export class Player extends GameObject {
         this.live = false;
     }
 
-    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [], orbs = [], checkpoints = [] }) {
+    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [], orbs = [], checkpoints = [], win = null }) {
         if (!this.live) {
             this.deathTimer = goTowards(this.deathTimer, 0, deltatime);
             if (this.deathTimer == 0) {
@@ -211,6 +211,10 @@ export class Player extends GameObject {
                 this.spawnGravity = checkpoint.gravity;
             }
         }
+
+        if (this.position.y >= 65 || this.position.y <= -10) {
+            this.kill();
+        }
         //#endregion
 
         //#region Checkpoints
@@ -229,11 +233,21 @@ export class Player extends GameObject {
 
         //#Region Orbs
         for (const orb of orbs) {
-            if (orb.active && AABB(this, orb)) {
+            if (orb.active && AABB(this, orb) && !this.canSwitchGravity) {
                 this.canSwitchGravity = true;
                 orb.collect();
             }
         }
+        //#endregion
+
+        //#region Win
+        if (win !== null && AABB(this, win)) {
+            this.spawnPoint.multiplyScalar(0);
+            this.spawnGravity = -1;
+            this.kill();
+        }
+        //#endregion
+
         this.mesh.position.x = this.position.x;
         this.mesh.position.y = this.position.y;
         this.mesh.scale.x = this.size.x;
