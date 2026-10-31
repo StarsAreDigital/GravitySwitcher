@@ -5,6 +5,8 @@ import { Obstacle } from './core/obstacle';
 import { Solid } from './core/solid';
 import { cameraFollow, pointInBox } from './core/common';
 import level1 from './core/levels/level-1.json';
+import { MTLLoader, OBJLoader } from 'three/examples/jsm/Addons.js';
+import { Checkpoint } from './core/checkpoint';
 
 let downKeys = {};
 let running = true;
@@ -16,6 +18,10 @@ window.addEventListener('keydown', function (event) {
 
     if (event.key == 'Escape') {
         running = !running;
+    }
+
+    if (event.key == 'r' || event.key == 'R') {
+        player.respawn();
     }
 });
 
@@ -62,8 +68,12 @@ function animate(time) {
         rightNudgeCollides = rightNudgeCollides || pointInBox(colliderRightNudge, block);
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
-    
-    player.update({ deltatime, downKeys, elapsed, solidBlocks, hazards: spikes });
+
+    player.update({
+        deltatime, downKeys, elapsed,
+        solidBlocks: solidBlocks,
+        hazards: spikes,
+        checkpoints: checkpoints });
 
     cameraFollow(camera, player);
 
@@ -89,7 +99,24 @@ const spikeMaterial = new THREE.MeshBasicMaterial({
 });
 const groundMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(0.5, 0.5, 0.5),
-})
+});
+const flagMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(1, 1, 0),
+});
+
+const objLoader = new OBJLoader().setPath('resources/');
+
+const obj = await objLoader.loadAsync('checkpointFlag.obj');
+const flagGeometry = obj.children[0].geometry;
+flagGeometry.scale(1 / 16, 1 / 16, 1 / 16);
+flagGeometry.translate(0.5, 0.5, 0.5);
+
+// const checkpoint = new Checkpoint(
+//     new THREE.Mesh(flagGeometry, flagMaterial),
+//     new THREE.Vector2(0, 0),
+//     new THREE.Vector2(2, 2),
+//     -1
+// );
 
 const player = new Player(
     new THREE.Mesh(cubeGeometry, basicMaterial),
@@ -116,6 +143,26 @@ const spikes = level1.spikes.map(spike => {
     return obstacle;
 });
 
+const checkpoints = level1.checkpoints.map(checkpoint => {
+    const checkpointObj = new Checkpoint(
+        new THREE.Mesh(flagGeometry, flagMaterial),
+        new THREE.Vector2(checkpoint.x, checkpoint.y),
+        new THREE.Vector2(checkpoint.width, checkpoint.height),
+        checkpoint.gravity
+    );
+    const rotation = checkpoint.gravity == -1 ? 0 : Math.PI;
+    const centerOffset = new THREE.Vector2(checkpoint.width / 2, checkpoint.height / 2)
+        .rotateAround(new THREE.Vector2(), rotation);
+
+    checkpointObj.mesh.rotation.z = rotation;
+    checkpointObj.mesh.position.set(
+        checkpoint.x + checkpoint.width / 2 - centerOffset.x,
+        checkpoint.y + checkpoint.height / 2 - centerOffset.y,
+        checkpointObj.mesh.position.z,
+    );
+    return checkpointObj;
+});
+
 const solidBlocks = level1.platforms.map(platform =>
     new Solid(
         new THREE.Mesh(cubeGeometry, groundMaterial),
@@ -124,7 +171,7 @@ const solidBlocks = level1.platforms.map(platform =>
     )
 );
 
-const gameElements = [player, ...spikes, ...solidBlocks];
+const gameElements = [player, ...spikes, ...solidBlocks, ...checkpoints];
 scene.add(...gameElements.map(x => x.mesh));
 
 camera.position.y = 10;

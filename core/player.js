@@ -32,7 +32,7 @@ export class Player extends GameObject {
         this.maxSpeed = maxSpeed;
         this.instantTurnaround = instantTurnaround;
         this.maxBufferTime = maxBufferTime;
-        
+
         this.jumpHeight = Math.abs(jumpHeight);
         this.jumpTime = jumpTime;
         this.spawnGravity = spawnGravityDir;
@@ -62,11 +62,12 @@ export class Player extends GameObject {
         this.live = false;
     }
 
-    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [] }) {
+    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [], checkpoints = [] }) {
         if (!this.live) {
             this.deathTimer = goTowards(this.deathTimer, 0, deltatime);
             if (this.deathTimer == 0) {
                 this.live = true;
+                this.canSwitchGravity = false;
                 this.position.x = this.spawnPoint.x;
                 this.position.y = this.spawnPoint.y;
                 this.speed.multiplyScalar(0);
@@ -193,7 +194,23 @@ export class Player extends GameObject {
 
         //#region Hazards
         for (const hazard of hazards) {
+            if (AABB(this, hazard)) {
+                this.kill();
+            }
+        }
+        //#endregion
 
+        //#region Hazards
+        for (const checkpoint of checkpoints) {
+            if (AABB(this, checkpoint)) {
+                this.spawnPoint.x = checkpoint.position.x;
+                this.spawnPoint.y = checkpoint.position.y;
+                if (checkpoint.gravity == 1) {
+                    this.spawnPoint.y += checkpoint.size.y;
+                    this.spawnPoint.y -= this.size.y;
+                }
+                this.spawnGravity = checkpoint.gravity;
+            }
         }
         //#endregion
 
