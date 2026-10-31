@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { AABB, goTowards, pointInBox, Directions } from './common';
+import { AABB, goTowards, Directions } from './common';
 import { GameObject } from './game-object';
-import { float } from 'three/tsl';
 
 export class Player extends GameObject {
 
@@ -62,7 +61,7 @@ export class Player extends GameObject {
         this.live = false;
     }
 
-    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [] }) {
+    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [], orbs = [] }) {
         if (!this.live) {
             this.deathTimer = goTowards(this.deathTimer, 0, deltatime);
             if (this.deathTimer == 0) {
@@ -208,6 +207,13 @@ export class Player extends GameObject {
         }
         //#endregion
 
+        //#Region Orbs
+        for (const orb of orbs) {
+            if (orb.active && AABB(this, orb)) {
+                this.canSwitchGravity = true;
+                orb.collect();
+            }
+        }
         this.mesh.position.x = this.position.x;
         this.mesh.position.y = this.position.y;
         this.mesh.scale.x = this.size.x;
