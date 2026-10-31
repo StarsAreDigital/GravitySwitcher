@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'lil-gui'
 import { Player } from './core/player';
 import { Obstacle } from './core/obstacle';
+import { Orb } from './core/orb';
 import { Solid } from './core/solid';
 import { cameraFollow, pointInBox } from './core/common';
 import level1 from './core/levels/level-1.json';
@@ -68,12 +69,12 @@ function animate(time) {
         rightNudgeCollides = rightNudgeCollides || pointInBox(colliderRightNudge, block);
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
+    
+    for (const orb of orbs) {
+        orb.update(deltatime);
+    }
 
-    player.update({
-        deltatime, downKeys, elapsed,
-        solidBlocks: solidBlocks,
-        hazards: spikes,
-        checkpoints: checkpoints });
+    player.update({ deltatime, downKeys, elapsed, solidBlocks: solidBlocks, hazards: spikes, checkpoints: checkpoints, orbs: orbs });
 
     cameraFollow(camera, player);
 
@@ -85,7 +86,6 @@ const camera = new THREE.PerspectiveCamera(
     75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
 renderer.setAnimationLoop(animate);
-
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
@@ -94,6 +94,12 @@ cubeGeometry.translate(0.5, 0.5, 0.5);
 const spikeGeometry = new THREE.ConeGeometry(0.5, 1);
 spikeGeometry.translate(0.5, 0.5, 0.5);
 const basicMaterial = new THREE.MeshBasicMaterial();
+
+const orbGeometry = new THREE.CircleGeometry(0.5, 8);
+const orbMaterial = new THREE.MeshBasicMaterial({
+    color: new THREE.Color(0, 1, 0),
+});
+
 const spikeMaterial = new THREE.MeshBasicMaterial({
     color: new THREE.Color(1, 0, 0),
 });
@@ -110,13 +116,6 @@ const obj = await objLoader.loadAsync('checkpointFlag.obj');
 const flagGeometry = obj.children[0].geometry;
 flagGeometry.scale(1 / 16, 1 / 16, 1 / 16);
 flagGeometry.translate(0.5, 0.5, 0.5);
-
-// const checkpoint = new Checkpoint(
-//     new THREE.Mesh(flagGeometry, flagMaterial),
-//     new THREE.Vector2(0, 0),
-//     new THREE.Vector2(2, 2),
-//     -1
-// );
 
 const player = new Player(
     new THREE.Mesh(cubeGeometry, basicMaterial),
@@ -171,7 +170,15 @@ const solidBlocks = level1.platforms.map(platform =>
     )
 );
 
-const gameElements = [player, ...spikes, ...solidBlocks, ...checkpoints];
+const orbs = level1.orbs.map(orb =>
+    new Orb(
+        new THREE.Mesh(orbGeometry, orbMaterial),
+        new THREE.Vector2(orb.x, orb.y),
+        new THREE.Vector2(orb.width, orb.height)
+    )
+);
+
+const gameElements = [player, ...spikes, ...solidBlocks, ...orbs, ...checkpoints];
 scene.add(...gameElements.map(x => x.mesh));
 
 camera.position.y = 10;

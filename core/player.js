@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { AABB, goTowards, pointInBox, Directions } from './common';
+import { AABB, goTowards, Directions } from './common';
 import { GameObject } from './game-object';
-import { float } from 'three/tsl';
 
 export class Player extends GameObject {
 
@@ -62,7 +61,7 @@ export class Player extends GameObject {
         this.live = false;
     }
 
-    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [], checkpoints = [] }) {
+    update({ deltatime, downKeys, elapsed, solidBlocks = [], hazards = [], orbs = [], checkpoints = [] }) {
         if (!this.live) {
             this.deathTimer = goTowards(this.deathTimer, 0, deltatime);
             if (this.deathTimer == 0) {
@@ -214,6 +213,27 @@ export class Player extends GameObject {
         }
         //#endregion
 
+        //#region Checkpoints
+        for (const checkpoint of checkpoints) {
+            if (AABB(this, checkpoint)) {
+                this.spawnPoint.x = checkpoint.position.x;
+                this.spawnPoint.y = checkpoint.position.y;
+                if (checkpoint.gravity == 1) {
+                    this.spawnPoint.y += checkpoint.size.y;
+                    this.spawnPoint.y -= this.size.y;
+                }
+                this.spawnGravity = checkpoint.gravity;
+            }
+        }
+        //#endregion
+
+        //#Region Orbs
+        for (const orb of orbs) {
+            if (orb.active && AABB(this, orb)) {
+                this.canSwitchGravity = true;
+                orb.collect();
+            }
+        }
         this.mesh.position.x = this.position.x;
         this.mesh.position.y = this.position.y;
         this.mesh.scale.x = this.size.x;
