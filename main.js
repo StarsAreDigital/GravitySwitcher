@@ -67,7 +67,7 @@ function animate(time) {
     }
     player.grounded = (leftCollides && leftNudgeCollides) || (rightCollides && rightNudgeCollides);
 
-    player.update({ deltatime, downKeys, elapsed, solidBlocks, hazards });
+    player.update({ deltatime, downKeys, elapsed, solidBlocks });
 
     cameraFollow(camera, player);
 

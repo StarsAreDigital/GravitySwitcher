@@ -21,7 +21,7 @@ export class Player extends GameObject {
         maxFallSpeed = -0.5,
         coyoteTime = 0.1,
 
-        deathTime = 1.0,
+        deathTime = 2.0,
         spawnPoint = null,
         spawnGravityDir = -1,
     ) {
@@ -32,7 +32,7 @@ export class Player extends GameObject {
         this.maxSpeed = maxSpeed;
         this.instantTurnaround = instantTurnaround;
         this.maxBufferTime = maxBufferTime;
-
+        
         this.jumpHeight = Math.abs(jumpHeight);
         this.jumpTime = jumpTime;
         this.spawnGravity = spawnGravityDir;
@@ -193,18 +193,7 @@ export class Player extends GameObject {
 
         //#region Hazards
         for (const hazard of hazards) {
-            const playerStart = this.position;
-            const playerEnd = (new THREE.Vector2).addVectors(this.position, this.size);
 
-            const hazardStart = hazard.position;
-            const hazardEnd = (new THREE.Vector2).addVectors(hazard.position, hazard.size);
-
-            const minkowskiStart = (new THREE.Vector2).subVectors(playerStart, hazardEnd);
-            const minkowskiEnd = (new THREE.Vector2).subVectors(playerEnd, hazardStart);
-
-            if (minkowskiStart.x <= 0 && minkowskiStart.y <= 0 && minkowskiEnd.x >= 0 && minkowskiEnd.y >= 0) {
-                this.kill();
-            }
         }
         //#endregion
 
